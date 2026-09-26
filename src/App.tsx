@@ -153,7 +153,15 @@ export default function App() {
         src = track.audioUrl;
       }
 
-      if (!src) return;
+      if (!src) {
+        console.warn('Faixa sem arquivo de áudio:', track.title);
+        const currentQ = newQueue || queue;
+        const nextPlayable = currentQ.find((t) => t.id !== track.id && (t.audioBlob || t.audioUrl));
+        if (nextPlayable) {
+          playTrack(nextPlayable, currentQ);
+        }
+        return;
+      }
 
       audio.src = src;
       audio.volume = isMuted ? 0 : volume;
@@ -425,7 +433,9 @@ export default function App() {
   // Play all tracks from a playlist or list
   const handlePlayAll = (targetTracks: Track[], shuffle = false) => {
     if (targetTracks.length === 0) return;
-    const playListQueue = shuffle ? [...targetTracks].sort(() => Math.random() - 0.5) : targetTracks;
+    const playable = targetTracks.filter((t) => t.audioBlob || t.audioUrl);
+    const tracksToPlay = playable.length > 0 ? playable : targetTracks;
+    const playListQueue = shuffle ? [...tracksToPlay].sort(() => Math.random() - 0.5) : tracksToPlay;
     playTrack(playListQueue[0], playListQueue);
   };
 
@@ -620,6 +630,9 @@ export default function App() {
               onPlayTrack={(track) => playTrack(track, tracks)}
               currentTrackId={currentTrack?.id}
               isPlaying={isPlaying}
+              onNavigateToPlaylist={(plId) => {
+                handleSelectPlaylist(plId);
+              }}
             />
           )}
         </main>

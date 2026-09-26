@@ -35,7 +35,11 @@ export async function parseAudioFile(file: File): Promise<ParsedAudioMetadata> {
       if (id3.album) album = id3.album;
       if (id3.year) year = id3.year;
       if (id3.coverBlob) {
-        coverUrl = URL.createObjectURL(id3.coverBlob);
+        try {
+          coverUrl = await blobToDataUrl(id3.coverBlob);
+        } catch {
+          coverUrl = undefined;
+        }
       }
     }
   } catch (err) {
@@ -55,6 +59,15 @@ export async function parseAudioFile(file: File): Promise<ParsedAudioMetadata> {
     duration: Math.round(duration),
     coverUrl,
   };
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
 // Clean filename to extract artist and song title
