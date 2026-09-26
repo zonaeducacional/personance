@@ -1,6 +1,7 @@
 import React from 'react';
-import { Menu, UploadCloud, Sliders, Disc, Sparkles, Keyboard } from 'lucide-react';
+import { Menu, UploadCloud, Sliders, Sparkles, Keyboard } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
+import { RippleLogo } from './RippleLogo';
 import { ViewTab } from '../types';
 
 interface HeaderProps {
@@ -31,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2 md:hidden">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center p-0.5">
             <div className="w-full h-full bg-[#0a0b13] rounded-[6px] flex items-center justify-center">
-              <Disc className="w-4 h-4 text-cyan-400" />
+              <RippleLogo size={16} className="w-4 h-4 text-cyan-400" />
             </div>
           </div>
           <span className="text-xs font-bold text-white tracking-wider">RESØNANCE</span>

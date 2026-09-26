@@ -1,52 +1,95 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0a0b10"/>
-      <stop offset="50%" stop-color="#12131d"/>
-      <stop offset="100%" stop-color="#06070a"/>
+    <!-- Background Lake Dark Water Gradient -->
+    <radialGradient id="lakeBg" cx="45%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="45%" stop-color="#090d16"/>
+      <stop offset="100%" stop-color="#04060a"/>
+    </radialGradient>
+
+    <!-- Water Surface Sheen Angle -->
+    <linearGradient id="waterSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.4"/>
     </linearGradient>
-    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00f2fe"/>
-      <stop offset="35%" stop-color="#4facfe"/>
-      <stop offset="70%" stop-color="#a18cd1"/>
-      <stop offset="100%" stop-color="#fbc2eb"/>
+
+    <!-- Ripple Wave Highlights (Sunlight / Moonlight glancing on water) -->
+    <linearGradient id="waveLightGrad" x1="20%" y1="10%" x2="80%" y2="90%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="25%" stop-color="#67e8f9" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#06b6d4" stop-opacity="0.75"/>
+      <stop offset="85%" stop-color="#3b82f6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0.15"/>
     </linearGradient>
-    <linearGradient id="coreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff0844"/>
-      <stop offset="100%" stop-color="#ffb199"/>
+
+    <!-- Subtle Wave Shadow (under wave crests) -->
+    <linearGradient id="waveShadowGrad" x1="80%" y1="90%" x2="20%" y2="10%">
+      <stop offset="0%" stop-color="#020617" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#0369a1" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="16" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+
+    <!-- Center Impact Droplet Flare -->
+    <radialGradient id="impactGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#22d3ee" stop-opacity="0.9"/>
+      <stop offset="65%" stop-color="#0284c7" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0369a1" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Glow Filter for luminous ripples -->
+    <filter id="rippleGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
     </filter>
   </defs>
-  
-  <!-- Outer Rounded Container -->
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  
-  <!-- Subtle Groove Lines -->
-  <circle cx="256" cy="256" r="200" fill="none" stroke="#23263b" stroke-width="1.5" stroke-dasharray="4 8"/>
-  <circle cx="256" cy="256" r="168" fill="none" stroke="#2d324d" stroke-width="1"/>
-  <circle cx="256" cy="256" r="136" fill="none" stroke="#373c5f" stroke-width="1.5" stroke-dasharray="3 6"/>
 
-  <!-- Glowing Sonic Resonance Arcs -->
-  <g filter="url(#glow)">
-    <path d="M 120 256 A 136 136 0 0 1 392 256" fill="none" stroke="url(#ringGrad)" stroke-width="14" stroke-linecap="round"/>
-    <path d="M 160 256 A 96 96 0 0 0 352 256" fill="none" stroke="url(#ringGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="14 18"/>
-    <circle cx="256" cy="256" r="64" fill="none" stroke="url(#ringGrad)" stroke-width="10"/>
-  </g>
+  <!-- App Icon Base Squircle Container -->
+  <rect width="512" height="512" rx="116" fill="url(#lakeBg)"/>
+  <rect width="512" height="512" rx="116" fill="url(#waterSheen)"/>
 
-  <!-- Turntable Vinyl Core / Disc Center -->
-  <circle cx="256" cy="256" r="44" fill="#0d0e15" stroke="url(#coreGrad)" stroke-width="5"/>
-  <circle cx="256" cy="256" r="16" fill="url(#coreGrad)"/>
-  <circle cx="256" cy="256" r="5" fill="#ffffff"/>
+  <!-- Outer Border Stroke -->
+  <rect width="512" height="512" rx="116" fill="none" stroke="rgba(56, 189, 248, 0.15)" stroke-width="3"/>
 
-  <!-- Play / Dynamic Accent Triangle Indicator -->
-  <polygon points="266,256 250,246 250,266" fill="#ffffff" opacity="0.9"/>
+  <!-- ================= WATER RIPPLE WAVES (STONE IN LAKE) ================= -->
   
-  <!-- Soundwave vertical equalizer accents -->
-  <rect x="236" y="80" width="8" height="28" rx="4" fill="url(#ringGrad)"/>
-  <rect x="252" y="64" width="8" height="48" rx="4" fill="url(#ringGrad)"/>
-  <rect x="268" y="74" width="8" height="36" rx="4" fill="url(#ringGrad)"/>
-  <rect x="252" y="400" width="8" height="44" rx="4" fill="url(#ringGrad)"/>
+  <!-- Wave 6: Outermost gentle harmonic wave fading into lake boundaries -->
+  <ellipse cx="256" cy="256" rx="224" ry="212" fill="none" stroke="url(#waveShadowGrad)" stroke-width="4" opacity="0.35"/>
+  <ellipse cx="256" cy="256" rx="222" ry="210" fill="none" stroke="url(#waveLightGrad)" stroke-width="2.5" opacity="0.25" stroke-dasharray="16 8"/>
+
+  <!-- Wave 5: Expansive outer ripple -->
+  <ellipse cx="256" cy="256" rx="186" ry="176" fill="none" stroke="url(#waveShadowGrad)" stroke-width="6" opacity="0.5"/>
+  <ellipse cx="256" cy="254" rx="184" ry="174" fill="none" stroke="url(#waveLightGrad)" stroke-width="4" opacity="0.45"/>
+
+  <!-- Wave 4: Medium expansive ripple -->
+  <ellipse cx="256" cy="256" rx="146" ry="138" fill="none" stroke="url(#waveShadowGrad)" stroke-width="8" opacity="0.6"/>
+  <ellipse cx="256" cy="254" rx="144" ry="136" fill="none" stroke="url(#waveLightGrad)" stroke-width="6" opacity="0.65" filter="url(#rippleGlow)"/>
+
+  <!-- Wave 3: Strong central ripple wave -->
+  <ellipse cx="256" cy="256" rx="108" ry="102" fill="none" stroke="url(#waveShadowGrad)" stroke-width="10" opacity="0.7"/>
+  <ellipse cx="256" cy="253" rx="106" ry="100" fill="none" stroke="url(#waveLightGrad)" stroke-width="8" opacity="0.85" filter="url(#rippleGlow)"/>
+
+  <!-- Wave 2: Immediate post-impact splash wave -->
+  <ellipse cx="256" cy="256" rx="72" ry="68" fill="none" stroke="url(#waveShadowGrad)" stroke-width="12" opacity="0.8"/>
+  <ellipse cx="256" cy="253" rx="70" ry="66" fill="none" stroke="url(#waveLightGrad)" stroke-width="10" opacity="0.95" filter="url(#rippleGlow)"/>
+
+  <!-- Wave 1: Tight impact crown (where stone penetrated the water surface) -->
+  <ellipse cx="256" cy="255" rx="38" ry="36" fill="none" stroke="#0891b2" stroke-width="10" opacity="0.9"/>
+  <ellipse cx="256" cy="253" rx="36" ry="34" fill="none" stroke="#ffffff" stroke-width="7" opacity="1" filter="url(#rippleGlow)"/>
+
+  <!-- Central Water Droplet / Stone Impact Point -->
+  <circle cx="256" cy="254" r="28" fill="url(#impactGlow)"/>
+  <circle cx="256" cy="253" r="14" fill="#06b6d4"/>
+  <circle cx="256" cy="252" r="9" fill="#38bdf8"/>
+  <circle cx="254" cy="250" r="4.5" fill="#ffffff"/>
+
+  <!-- Little droplet reflections around impact point -->
+  <circle cx="228" cy="242" r="2.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="282" cy="246" r="2" fill="#ffffff" opacity="0.75"/>
+  <circle cx="256" cy="222" r="3" fill="#67e8f9" opacity="0.85"/>
+  <circle cx="256" cy="286" r="2.2" fill="#38bdf8" opacity="0.6"/>
 </svg>

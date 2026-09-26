@@ -8,10 +8,10 @@ import {
   UploadCloud,
   Sparkles,
   Plus,
-  Disc,
 } from 'lucide-react';
 import { ViewTab, Playlist } from '../types';
 import { PWAInstallButton } from './PWAInstallButton';
+import { RippleLogo } from './RippleLogo';
 
 interface SidebarProps {
   currentTab: ViewTab;
@@ -39,9 +39,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Brand Header */}
       <div>
         <div className="flex items-center gap-3 px-2 py-3 mb-6">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-pink-500 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-blue-500 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-500/20">
             <div className="w-full h-full bg-[#0a0b13] rounded-[10px] flex items-center justify-center">
-              <Disc className="w-5 h-5 text-cyan-400" />
+              <RippleLogo size={22} className="w-5 h-5 text-cyan-400" />
             </div>
           </div>
           <div>

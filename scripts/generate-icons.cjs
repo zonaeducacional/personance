@@ -73,97 +73,120 @@ function makeChunk(type, data) {
   return Buffer.concat([length, body, crcBuf]);
 }
 
-// Generate aesthetic Resonance sonic disc icon
-function drawIconPixel(x, y, width, height, isMaskable = false) {
+// Generate aesthetic Lake Ripple icon (circular waves like stone dropped into calm water)
+function drawRipplePixel(x, y, width, height, isMaskable = false) {
   const cx = width / 2;
   const cy = height / 2;
   const dx = x - cx;
-  const dy = y - cy;
+  const dy = (y - cy) * 1.05; // slightly elliptic water surface perspective
   const dist = Math.sqrt(dx * dx + dy * dy);
-  const maxR = width * 0.46;
+  const maxR = width * 0.48;
 
-  // Background deep dark purple/slate gradient
-  const bgGrad = y / height;
-  let bgR = Math.round(10 + 12 * bgGrad);
-  let bgG = Math.round(11 + 14 * bgGrad);
-  let bgB = Math.round(18 + 24 * bgGrad);
+  // Background deep dark lake water with subtle cyan/blue depth gradient
+  const bgGradY = y / height;
+  let bgR = Math.round(5 + 8 * (1 - dist / maxR));
+  let bgG = Math.round(9 + 14 * (1 - dist / maxR));
+  let bgB = Math.round(18 + 26 * (1 - dist / maxR));
 
-  // If not maskable, round corners
+  // If not maskable, round squircle container corners
   if (!isMaskable) {
     const rx = width * 0.22;
-    // Box rounded rect distance test
-    const qx = Math.max(0, Math.abs(dx) - (cx - rx));
-    const qy = Math.max(0, Math.abs(dy) - (cy - rx));
+    const qx = Math.max(0, Math.abs(x - cx) - (cx - rx));
+    const qy = Math.max(0, Math.abs(y - cy) - (cy - rx));
     const cornerDist = Math.sqrt(qx * qx + qy * qy);
     if (cornerDist > rx) {
-      return [0, 0, 0, 0]; // transparent outside rounded rect
+      return [0, 0, 0, 0]; // transparent outside squircle
     }
   }
 
-  // Draw sonic vinyl grooves and glowing resonance rings
+  // Wave ripple radii (expanding circular wave fronts)
+  // Wave 1: 0.14 * width
+  // Wave 2: 0.24 * width
+  // Wave 3: 0.34 * width
+  // Wave 4: 0.43 * width
+  const waveR1 = width * 0.14;
+  const waveR2 = width * 0.24;
+  const waveR3 = width * 0.34;
+  const waveR4 = width * 0.43;
+
+  // Normalized angle for specular highlight (light coming from top-left ~ -135 deg)
   const angle = Math.atan2(dy, dx);
+  const lightAngle = -2.35; // top-left
+  const lightFactor = Math.max(0, Math.cos(angle - lightAngle));
+  const shadowFactor = Math.max(0, Math.cos(angle - (lightAngle + Math.PI)));
 
-  // Ring 1 (outer cyan/purple sound ring)
-  const ring1Dist = Math.abs(dist - maxR * 0.76);
-  if (ring1Dist < width * 0.035) {
-    const glow = 1 - ring1Dist / (width * 0.035);
-    // Cyan to magenta gradient along angle
-    const t = (angle + Math.PI) / (2 * Math.PI);
-    const rRing = Math.round(0 * (1 - t) + 240 * t);
-    const gRing = Math.round(242 * (1 - t) + 60 * t);
-    const bRing = Math.round(254 * (1 - t) + 180 * t);
-    return [
-      Math.round(bgR * (1 - glow) + rRing * glow),
-      Math.round(bgG * (1 - glow) + gRing * glow),
-      Math.round(bgB * (1 - glow) + bRing * glow),
-      255,
-    ];
-  }
+  let highlight = 0;
+  let shadow = 0;
+  let glowColor = [34, 211, 238]; // #22d3ee cyan
 
-  // Ring 2 (mid sound ring)
-  const ring2Dist = Math.abs(dist - maxR * 0.52);
-  if (ring2Dist < width * 0.025) {
-    const glow = 1 - ring2Dist / (width * 0.025);
-    return [
-      Math.round(bgR * (1 - glow) + 160 * glow),
-      Math.round(bgG * (1 - glow) + 100 * glow),
-      Math.round(bgB * (1 - glow) + 250 * glow),
-      255,
-    ];
-  }
+  // Calculate distance to each concentric wave crest
+  const waves = [
+    { r: waveR1, width: width * 0.045, intensity: 1.0, color: [255, 255, 255] },
+    { r: waveR2, width: width * 0.040, intensity: 0.85, color: [103, 232, 249] },
+    { r: waveR3, width: width * 0.035, intensity: 0.65, color: [56, 189, 248] },
+    { r: waveR4, width: width * 0.030, intensity: 0.45, color: [99, 102, 241] },
+  ];
 
-  // Center vinyl disc core
-  if (dist <= maxR * 0.35) {
-    if (dist <= maxR * 0.12) {
-      // Inner glowing core
-      return [255, 60, 100, 255];
+  for (const w of waves) {
+    const d = Math.abs(dist - w.r);
+    if (d < w.width) {
+      const factor = (1 - d / w.width);
+      // Bell curve profile
+      const bell = factor * factor;
+      // Sunlight reflection on crest
+      const crestLight = bell * (0.4 + 0.6 * lightFactor) * w.intensity;
+      const crestShadow = bell * (0.3 * shadowFactor) * w.intensity;
+
+      if (crestLight > highlight) {
+        highlight = crestLight;
+        glowColor = w.color;
+      }
+      if (crestShadow > shadow) {
+        shadow = crestShadow;
+      }
     }
-    if (dist <= maxR * 0.15) {
-      // Core ring
+  }
+
+  // Central Stone / Droplet Impact Point
+  const impactR = width * 0.065;
+  if (dist < impactR) {
+    const dropFactor = 1 - dist / impactR;
+    const dropBell = dropFactor * dropFactor;
+    // Brilliant white and cyan droplet core
+    const rDrop = Math.round(255 * dropBell + bgR * (1 - dropBell));
+    const gDrop = Math.round(255 * dropBell * 0.95 + bgG * (1 - dropBell));
+    const bDrop = Math.round(255 * dropBell * 0.9 + bgB * (1 - dropBell));
+    return [rDrop, gDrop, bDrop, 255];
+  }
+
+  // Little splash droplets in air around impact
+  const dX = dx / width;
+  const dY = dy / height;
+  const splashDots = [
+    { x: -0.06, y: -0.04, r: 0.012 },
+    { x: 0.07, y: -0.03, r: 0.010 },
+    { x: 0.00, y: -0.08, r: 0.013 },
+    { x: 0.01, y: 0.07, r: 0.011 },
+  ];
+  for (const dot of splashDots) {
+    const dotDist = Math.sqrt((dX - dot.x) ** 2 + (dY - dot.y) ** 2);
+    if (dotDist < dot.r) {
       return [255, 255, 255, 255];
     }
-    // Vinyl center label
-    return [24, 25, 38, 255];
   }
 
-  // Play triangle symbol in center
-  const triX = dx / (maxR * 0.18);
-  const triY = dy / (maxR * 0.18);
-  if (triX >= -0.3 && triX <= 0.5 && Math.abs(triY) <= (0.5 - triX * 0.5)) {
-    return [255, 255, 255, 255];
+  // Blend lake surface + wave highlights & shadows
+  let finalR = bgR * (1 - shadow * 0.5);
+  let finalG = bgG * (1 - shadow * 0.5);
+  let finalB = bgB * (1 - shadow * 0.5);
+
+  if (highlight > 0) {
+    finalR = Math.min(255, finalR + glowColor[0] * highlight);
+    finalG = Math.min(255, finalG + glowColor[1] * highlight);
+    finalB = Math.min(255, finalB + glowColor[2] * highlight);
   }
 
-  // Grooves (fine rings)
-  if (dist > maxR * 0.35 && dist < maxR * 0.95) {
-    const groove = Math.sin(dist * 0.8) > 0.85;
-    if (groove) {
-      bgR = Math.min(255, bgR + 15);
-      bgG = Math.min(255, bgG + 15);
-      bgB = Math.min(255, bgB + 25);
-    }
-  }
-
-  return [bgR, bgG, bgB, 255];
+  return [Math.round(finalR), Math.round(finalG), Math.round(finalB), 255];
 }
 
 const publicDir = path.resolve(__dirname, '../public');
@@ -172,24 +195,23 @@ if (!fs.existsSync(publicDir)) {
 }
 
 // Generate 192x192
-console.log('Generating pwa-192x192.png...');
-const png192 = createPNG(192, 192, (x, y, w, h) => drawIconPixel(x, y, w, h, false));
+console.log('Generating pwa-192x192.png (water ripples)...');
+const png192 = createPNG(192, 192, (x, y, w, h) => drawRipplePixel(x, y, w, h, false));
 fs.writeFileSync(path.join(publicDir, 'pwa-192x192.png'), png192);
 
 // Generate 512x512
-console.log('Generating pwa-512x512.png...');
-const png512 = createPNG(512, 512, (x, y, w, h) => drawIconPixel(x, y, w, h, false));
+console.log('Generating pwa-512x512.png (water ripples)...');
+const png512 = createPNG(512, 512, (x, y, w, h) => drawRipplePixel(x, y, w, h, false));
 fs.writeFileSync(path.join(publicDir, 'pwa-512x512.png'), png512);
 
 // Generate maskable 512x512
-console.log('Generating pwa-maskable-512x512.png...');
-const pngMaskable = createPNG(512, 512, (x, y, w, h) => drawIconPixel(x, y, w, h, true));
+console.log('Generating pwa-maskable-512x512.png (water ripples maskable)...');
+const pngMaskable = createPNG(512, 512, (x, y, w, h) => drawRipplePixel(x, y, w, h, true));
 fs.writeFileSync(path.join(publicDir, 'pwa-maskable-512x512.png'), pngMaskable);
 
 // Generate apple-touch-icon 180x180
-console.log('Generating apple-touch-icon.png...');
-const pngApple = createPNG(180, 180, (x, y, w, h) => drawIconPixel(x, y, w, h, false));
+console.log('Generating apple-touch-icon.png (water ripples)...');
+const pngApple = createPNG(180, 180, (x, y, w, h) => drawRipplePixel(x, y, w, h, false));
 fs.writeFileSync(path.join(publicDir, 'apple-touch-icon.png'), pngApple);
 
-// Generate favicon.ico (can also just copy png or serve png)
-console.log('Icons generated successfully.');
+console.log('All water ripple icons generated successfully!');

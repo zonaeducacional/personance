@@ -14,7 +14,7 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['apple-touch-icon.png', 'icon.svg'],
         manifest: {
-          id: '/',
+          id: './',
           name: 'Resonance — Sistema de Áudio Independente',
           short_name: 'Resonance',
           description: 'Player de áudio moderno e independente com playlists personalizadas, visualizador e suporte offline sem backend.',

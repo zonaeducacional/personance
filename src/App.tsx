@@ -76,20 +76,24 @@ export default function App() {
 
   // Refresh DB data
   const loadData = useCallback(async () => {
-    let loadedTracks = await getAllTracks();
-    if (loadedTracks.length === 0) {
-      loadedTracks = await seedInitialDataIfEmpty();
+    try {
+      let loadedTracks = await getAllTracks();
+      if (loadedTracks.length === 0) {
+        loadedTracks = await seedInitialDataIfEmpty();
+      }
+      const loadedPlaylists = await getAllPlaylists();
+
+      setTracks(loadedTracks);
+      setPlaylists(loadedPlaylists);
+
+      // Load saved settings
+      const savedEq = await getSettings<EqualizerSettings | null>('eq_settings', null);
+      if (savedEq) setEqSettings(savedEq);
+      const savedVis = await getSettings<VisualizerMode | null>('visualizer_mode', null);
+      if (savedVis) setVisualizerMode(savedVis);
+    } catch (err) {
+      console.error('Falha ao inicializar biblioteca de áudio:', err);
     }
-    const loadedPlaylists = await getAllPlaylists();
-
-    setTracks(loadedTracks);
-    setPlaylists(loadedPlaylists);
-
-    // Load saved settings
-    const savedEq = await getSettings<EqualizerSettings | null>('eq_settings', null);
-    if (savedEq) setEqSettings(savedEq);
-    const savedVis = await getSettings<VisualizerMode | null>('visualizer_mode', null);
-    if (savedVis) setVisualizerMode(savedVis);
   }, []);
 
   useEffect(() => {

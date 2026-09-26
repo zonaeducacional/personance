@@ -23,9 +23,18 @@ const DB_NAME = 'resonance_music_db';
 const DB_VERSION = 1;
 
 let dbPromise: Promise<IDBPDatabase<ResonanceDB>> | null = null;
+let useMemoryFallback = false;
+const memoryTracks = new Map<string, Track>();
+const memoryPlaylists = new Map<string, Playlist>();
+const memorySettings = new Map<string, any>();
 
-export function getDB() {
+export async function getDB(): Promise<IDBPDatabase<ResonanceDB> | null> {
+  if (useMemoryFallback) return null;
   if (!dbPromise) {
+    if (typeof window === 'undefined' || !window.indexedDB) {
+      useMemoryFallback = true;
+      return null;
+    }
     dbPromise = openDB<ResonanceDB>(DB_NAME, DB_VERSION, {
       upgrade(db) {
         if (!db.objectStoreNames.contains('tracks')) {
@@ -41,32 +50,71 @@ export function getDB() {
           db.createObjectStore('settings');
         }
       },
+    }).catch((err) => {
+      console.warn('IndexedDB inacessível, utilizando modo de memória resiliente:', err);
+      useMemoryFallback = true;
+      return null as unknown as IDBPDatabase<ResonanceDB>;
     });
   }
-  return dbPromise;
+  try {
+    const db = await dbPromise;
+    return db || null;
+  } catch (err) {
+    console.warn('Erro ao obter conexão com IndexedDB:', err);
+    useMemoryFallback = true;
+    return null;
+  }
 }
 
 // Track operations
 export async function getAllTracks(): Promise<Track[]> {
-  const db = await getDB();
-  const tracks = await db.getAll('tracks');
-  // Sort descending by dateAdded
-  return tracks.sort((a, b) => b.dateAdded - a.dateAdded);
+  try {
+    const db = await getDB();
+    if (db) {
+      const tracks = await db.getAll('tracks');
+      return tracks.sort((a, b) => b.dateAdded - a.dateAdded);
+    }
+  } catch (err) {
+    console.warn('Erro ao ler faixas do IndexedDB, usando memória:', err);
+    useMemoryFallback = true;
+  }
+  return Array.from(memoryTracks.values()).sort((a, b) => b.dateAdded - a.dateAdded);
 }
 
 export async function getTrack(id: string): Promise<Track | undefined> {
-  const db = await getDB();
-  return db.get('tracks', id);
+  try {
+    const db = await getDB();
+    if (db) {
+      return await db.get('tracks', id);
+    }
+  } catch (err) {
+    console.warn('Erro ao buscar faixa:', err);
+  }
+  return memoryTracks.get(id);
 }
 
 export async function saveTrack(track: Track): Promise<void> {
-  const db = await getDB();
-  await db.put('tracks', track);
+  memoryTracks.set(track.id, track);
+  try {
+    const db = await getDB();
+    if (db) {
+      await db.put('tracks', track);
+    }
+  } catch (err) {
+    console.warn('Erro ao salvar faixa no IndexedDB:', err);
+  }
 }
 
 export async function deleteTrack(id: string): Promise<void> {
-  const db = await getDB();
-  await db.delete('tracks', id);
+  memoryTracks.delete(id);
+  try {
+    const db = await getDB();
+    if (db) {
+      await db.delete('tracks', id);
+    }
+  } catch (err) {
+    console.warn('Erro ao deletar faixa do IndexedDB:', err);
+  }
 
   // Also remove from any playlists that contain it
   const playlists = await getAllPlaylists();
@@ -79,77 +127,115 @@ export async function deleteTrack(id: string): Promise<void> {
 }
 
 export async function toggleFavorite(id: string): Promise<boolean> {
-  const db = await getDB();
-  const track = await db.get('tracks', id);
+  const track = await getTrack(id);
   if (track) {
     track.isFavorite = !track.isFavorite;
-    await db.put('tracks', track);
+    await saveTrack(track);
     return track.isFavorite;
   }
   return false;
 }
 
 export async function incrementPlayCount(id: string): Promise<void> {
-  const db = await getDB();
-  const track = await db.get('tracks', id);
+  const track = await getTrack(id);
   if (track) {
     track.playCount = (track.playCount || 0) + 1;
-    await db.put('tracks', track);
+    await saveTrack(track);
   }
 }
 
 // Playlist operations
 export async function getAllPlaylists(): Promise<Playlist[]> {
-  const db = await getDB();
-  const playlists = await db.getAll('playlists');
-  return playlists.sort((a, b) => b.dateCreated - a.dateCreated);
+  try {
+    const db = await getDB();
+    if (db) {
+      const playlists = await db.getAll('playlists');
+      return playlists.sort((a, b) => b.dateCreated - a.dateCreated);
+    }
+  } catch (err) {
+    console.warn('Erro ao carregar playlists do IndexedDB:', err);
+  }
+  return Array.from(memoryPlaylists.values()).sort((a, b) => b.dateCreated - a.dateCreated);
 }
 
 export async function getPlaylist(id: string): Promise<Playlist | undefined> {
-  const db = await getDB();
-  return db.get('playlists', id);
+  try {
+    const db = await getDB();
+    if (db) {
+      return await db.get('playlists', id);
+    }
+  } catch (err) {
+    console.warn('Erro ao buscar playlist:', err);
+  }
+  return memoryPlaylists.get(id);
 }
 
 export async function savePlaylist(playlist: Playlist): Promise<void> {
-  const db = await getDB();
-  await db.put('playlists', playlist);
+  memoryPlaylists.set(playlist.id, playlist);
+  try {
+    const db = await getDB();
+    if (db) {
+      await db.put('playlists', playlist);
+    }
+  } catch (err) {
+    console.warn('Erro ao salvar playlist no IndexedDB:', err);
+  }
 }
 
 export async function deletePlaylist(id: string): Promise<void> {
-  const db = await getDB();
-  await db.delete('playlists', id);
+  memoryPlaylists.delete(id);
+  try {
+    const db = await getDB();
+    if (db) {
+      await db.delete('playlists', id);
+    }
+  } catch (err) {
+    console.warn('Erro ao deletar playlist do IndexedDB:', err);
+  }
 }
 
 export async function addTrackToPlaylist(playlistId: string, trackId: string): Promise<void> {
-  const db = await getDB();
-  const playlist = await db.get('playlists', playlistId);
+  const playlist = await getPlaylist(playlistId);
   if (playlist && !playlist.trackIds.includes(trackId)) {
     playlist.trackIds.push(trackId);
     playlist.dateUpdated = Date.now();
-    await db.put('playlists', playlist);
+    await savePlaylist(playlist);
   }
 }
 
 export async function removeTrackFromPlaylist(playlistId: string, trackId: string): Promise<void> {
-  const db = await getDB();
-  const playlist = await db.get('playlists', playlistId);
+  const playlist = await getPlaylist(playlistId);
   if (playlist) {
     playlist.trackIds = playlist.trackIds.filter((id) => id !== trackId);
     playlist.dateUpdated = Date.now();
-    await db.put('playlists', playlist);
+    await savePlaylist(playlist);
   }
 }
 
 // Settings operations
 export async function getSettings<T>(key: string, defaultValue: T): Promise<T> {
-  const db = await getDB();
-  const val = await db.get('settings', key);
-  return val !== undefined ? val : defaultValue;
+  try {
+    const db = await getDB();
+    if (db) {
+      const val = await db.get('settings', key);
+      return val !== undefined ? val : defaultValue;
+    }
+  } catch (err) {
+    console.warn('Erro ao buscar configuração:', err);
+  }
+  return memorySettings.has(key) ? memorySettings.get(key) : defaultValue;
 }
 
 export async function saveSettings<T>(key: string, value: T): Promise<void> {
-  const db = await getDB();
-  await db.put('settings', value, key);
+  memorySettings.set(key, value);
+  try {
+    const db = await getDB();
+    if (db) {
+      await db.put('settings', value, key);
+    }
+  } catch (err) {
+    console.warn('Erro ao salvar configuração:', err);
+  }
 }
 
 // Curated demo cover arts (high aesthetic SVG data URIs)
