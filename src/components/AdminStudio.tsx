@@ -19,9 +19,10 @@ import {
   Disc,
   FolderUp,
   Search,
+  Smartphone,
 } from 'lucide-react';
 import { Track, Playlist } from '../types';
-import { parseAudioFile, generateCoverGradient } from '../services/id3Parser';
+import { parseAudioFile, generateCoverGradient, ensureAudioBlob } from '../services/id3Parser';
 import { saveTrack, deleteTrack, savePlaylist, deletePlaylist, exportLibraryJSON } from '../services/db';
 
 interface AdminStudioProps {
@@ -43,7 +44,7 @@ export const AdminStudio: React.FC<AdminStudioProps> = ({
   isPlaying,
   onNavigateToPlaylist,
 }) => {
-  const [activeTab, setActiveTab] = useState<'upload' | 'tracks' | 'playlists' | 'hosting'>('upload');
+  const [activeTab, setActiveTab] = useState<'upload' | 'tracks' | 'playlists' | 'mobile' | 'hosting'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ total: number; done: number; currentName: string }>({
     total: 0,
@@ -121,6 +122,7 @@ export const AdminStudio: React.FC<AdminStudioProps> = ({
       try {
         const metadata = await parseAudioFile(file);
         const trackId = `track-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        const safeAudioBlob = ensureAudioBlob(file, file.name);
 
         const newTrack: Track = {
           id: trackId,
@@ -131,7 +133,7 @@ export const AdminStudio: React.FC<AdminStudioProps> = ({
           year: metadata.year || new Date().getFullYear(),
           duration: metadata.duration,
           coverUrl: metadata.coverUrl,
-          audioBlob: file, // Saved into IndexedDB!
+          audioBlob: safeAudioBlob, // Saved into IndexedDB!
           dateAdded: Date.now(),
           playCount: 0,
           isFavorite: false,
@@ -423,6 +425,18 @@ export const AdminStudio: React.FC<AdminStudioProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveTab('mobile')}
+          className={`pb-3 px-2 font-semibold flex items-center gap-2 whitespace-nowrap transition border-b-2 cursor-pointer ${
+            activeTab === 'mobile'
+              ? 'border-cyan-400 text-cyan-300'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Smartphone className="w-4 h-4 text-cyan-400" />
+          <span>Ouvir no Celular</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('hosting')}
           className={`pb-3 px-2 font-semibold flex items-center gap-2 whitespace-nowrap transition border-b-2 cursor-pointer ${
             activeTab === 'hosting'
@@ -438,6 +452,25 @@ export const AdminStudio: React.FC<AdminStudioProps> = ({
       {/* TAB 1: UPLOAD */}
       {activeTab === 'upload' && (
         <div className="space-y-6 animate-in fade-in">
+          {/* Mobile tip banner */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/40 via-cyan-950/30 to-[#0e101c] border border-cyan-500/25 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-500/20">
+                <Smartphone className="w-4 h-4" />
+              </div>
+              <div className="text-slate-300">
+                <span className="font-bold text-white block">Quer ouvir suas músicas no celular?</span>
+                Por segurança e privacidade, os arquivos MP3 ficam gravados no navegador deste aparelho.
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveTab('mobile')}
+              className="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs font-semibold whitespace-nowrap transition cursor-pointer"
+            >
+              Ver Como Tocar no Celular &rarr;
+            </button>
+          </div>
+
           {/* Destination Selector: New Playlist vs Existing Playlist vs None */}
           <div className="p-5 rounded-2xl bg-[#0f111d] border border-cyan-500/25 space-y-4">
             <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase tracking-wider">
@@ -890,6 +923,118 @@ export const AdminStudio: React.FC<AdminStudioProps> = ({
                 <li>Em <strong>Source</strong>, selecione <strong>GitHub Actions</strong>.</li>
                 <li>O fluxo automático configurado no projeto compilará e colocará no ar o player com o suporte offline e o novo logo de ondas no lago.</li>
               </ol>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: HOW TO LISTEN ON MOBILE (CELULAR) */}
+      {activeTab === 'mobile' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* Main Explanation */}
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-[#12152a] via-[#0f1222] to-[#0c0d18] border border-cyan-500/25 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                <Smartphone className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-white">
+                  Por que as músicas não aparecem sozinhas no celular?
+                </h3>
+                <p className="text-xs text-cyan-300">
+                  Entenda como funciona o armazenamento privado e como colocar suas músicas no celular
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 text-xs text-slate-200 leading-relaxed space-y-2">
+              <p>
+                O <strong>Resonance</strong> foi desenvolvido com a arquitetura <strong>Local-First (100% Privado)</strong>. Os seus arquivos MP3 ficam gravados na memória local do navegador (<strong>IndexedDB</strong>) do aparelho onde foram enviados.
+              </p>
+              <p className="text-slate-400">
+                Isso significa que <strong>nenhum áudio seu é enviado para servidores da internet</strong>: você não gasta espaço em nuvem paga, não tem risco de vazamento e não depende de internet para tocar. Por essa razão, os arquivos que você colocou no computador ficam salvos apenas no computador.
+              </p>
+            </div>
+          </div>
+
+          {/* Action Step 1: Direct Mobile Upload */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-6 rounded-3xl bg-[#0f111d] border border-slate-800 space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-3">
+                  <UploadCloud className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-bold text-white mb-1">
+                  1. Subir as músicas direto pelo Celular (Recomendado)
+                </h4>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Abra o link do app no navegador do seu celular (Safari ou Chrome), toque no botão abaixo e selecione os MP3 que estão no seu aparelho ou no Google Drive/iCloud.
+                </p>
+              </div>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-bold text-xs shadow-lg shadow-cyan-500/25 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer"
+              >
+                <UploadCloud className="w-4 h-4 fill-black" />
+                <span>Subir Arquivos de Música Neste Aparelho</span>
+              </button>
+            </div>
+
+            {/* Action Step 2: Transferring Files from PC */}
+            <div className="p-6 rounded-3xl bg-[#0f111d] border border-slate-800 space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-3">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-bold text-white mb-1">
+                  2. Passar as músicas do Computador para o Celular
+                </h4>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Se os arquivos estão no computador, envie-os para o celular de forma simples:
+                </p>
+                <ul className="text-[11px] text-slate-300 space-y-1 list-disc pl-4 mt-2">
+                  <li>Envie os arquivos MP3 para você mesmo no <strong>WhatsApp</strong> ou <strong>Telegram</strong> e baixe no celular.</li>
+                  <li>Salve numa pasta do <strong>Google Drive</strong> ou <strong>iCloud Drive</strong> e acesse pelo celular.</li>
+                  <li>Ou conecte o cabo USB / use <strong>AirDrop</strong> / <strong>Quick Share</strong>.</li>
+                </ul>
+              </div>
+
+              <div className="text-[11px] text-cyan-400 font-semibold text-center pt-2">
+                Depois de baixar no celular, basta tocar em "Fazer Upload"!
+              </div>
+            </div>
+          </div>
+
+          {/* Action Step 3: Install PWA on Mobile */}
+          <div className="p-6 rounded-3xl bg-[#0e101c] border border-cyan-500/20 space-y-4">
+            <div className="flex items-center gap-2 text-white font-bold text-sm">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span>Dica de Ouro: Instalar o Resonance como Aplicativo no Celular</span>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Transforme o player em um app nativo para ouvir música em segundo plano com a tela apagada e ver controles na tela de bloqueio:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1.5">
+                <span className="font-bold text-cyan-300 block">No iPhone (Safari):</span>
+                <p className="text-slate-400 text-[11px]">
+                  1. Toque no botão de <strong>Compartilhar</strong> (ícone de quadrado com seta para cima).<br/>
+                  2. Role para baixo e selecione <strong>"Adicionar à Tela de Início"</strong>.<br/>
+                  3. O ícone de ondas azuis aparecerá na sua tela com abertura instantânea.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1.5">
+                <span className="font-bold text-cyan-300 block">No Android (Chrome):</span>
+                <p className="text-slate-400 text-[11px]">
+                  1. Toque nos <strong>3 pontinhos</strong> no canto superior direito.<br/>
+                  2. Selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.<br/>
+                  3. O player funciona offline e integrado com os controles de áudio do Android.
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -71,6 +71,20 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 // Clean filename to extract artist and song title
+export function ensureAudioBlob(file: Blob | File, filename?: string): Blob {
+  if (file.type && file.type.startsWith('audio/') && file.type !== 'audio/x-unknown') {
+    return file;
+  }
+  const name = (filename || (file as File).name || '').toLowerCase();
+  let mime = 'audio/mpeg';
+  if (name.endsWith('.wav')) mime = 'audio/wav';
+  else if (name.endsWith('.ogg')) mime = 'audio/ogg';
+  else if (name.endsWith('.m4a') || name.endsWith('.aac')) mime = 'audio/mp4';
+  else if (name.endsWith('.flac')) mime = 'audio/flac';
+
+  return new Blob([file], { type: mime });
+}
+
 function parseFromFilename(filename: string): { title: string; artist: string } {
   const cleanName = filename.replace(/\.(mp3|wav|ogg|m4a|flac|aac)$/i, '').trim();
 
@@ -102,7 +116,9 @@ function parseFromFilename(filename: string): { title: string; artist: string } 
 function getAudioDuration(file: File): Promise<number> {
   return new Promise((resolve) => {
     const audio = new Audio();
-    const objectUrl = URL.createObjectURL(file);
+    audio.preload = 'metadata';
+    const safeBlob = ensureAudioBlob(file, file.name);
+    const objectUrl = URL.createObjectURL(safeBlob);
     audio.src = objectUrl;
 
     audio.onloadedmetadata = () => {

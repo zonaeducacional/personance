@@ -15,25 +15,49 @@ class AudioEngine {
   constructor() {
     this.audio = new Audio();
     this.audio.preload = 'auto';
-    // Allow cross origin when needed
-    this.audio.crossOrigin = 'anonymous';
+
+    // Mobile (iOS Safari & Android Chrome) optimization
+    this.audio.setAttribute('playsinline', 'true');
+    this.audio.setAttribute('webkit-playsinline', 'true');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (this.audio as any).playsInline = true;
   }
 
   public getAudioElement(): HTMLAudioElement {
     return this.audio;
   }
 
+  /**
+   * Sets the audio source safely, handling mobile WebKit CORS quirks with blob: URLs
+   */
+  public setSource(src: string) {
+    if (src.startsWith('blob:')) {
+      // CRITICAL for iOS Safari: remove crossOrigin, otherwise Safari throws MEDIA_ELEMENT_ERROR or aborts on blob: URLs
+      this.audio.removeAttribute('crossorigin');
+    } else {
+      this.audio.crossOrigin = 'anonymous';
+    }
+    this.audio.src = src;
+    try {
+      this.audio.load();
+    } catch (e) {
+      console.warn('Audio load error:', e);
+    }
+  }
+
   // Initialize Web Audio Graph upon first user interaction
   public initWebAudio() {
     if (this.isInitialized) {
       if (this.audioContext && this.audioContext.state === 'suspended') {
-        this.audioContext.resume();
+        this.audioContext.resume().catch(() => {});
       }
       return;
     }
 
     try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
 
       this.audioContext = new AudioCtx();
@@ -117,6 +141,7 @@ class AudioEngine {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getFrequencyData(array: Uint8Array<any>): void {
     if (this.analyserNode) {
       this.analyserNode.getByteFrequencyData(array as unknown as Uint8Array<ArrayBuffer>);
@@ -125,6 +150,7 @@ class AudioEngine {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getTimeDomainData(array: Uint8Array<any>): void {
     if (this.analyserNode) {
       this.analyserNode.getByteTimeDomainData(array as unknown as Uint8Array<ArrayBuffer>);
@@ -135,7 +161,7 @@ class AudioEngine {
 
   public resumeContext(): void {
     if (this.audioContext && this.audioContext.state === 'suspended') {
-      this.audioContext.resume();
+      this.audioContext.resume().catch(() => {});
     }
   }
 }

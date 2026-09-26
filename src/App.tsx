@@ -147,7 +147,11 @@ export default function App() {
 
       let src = '';
       if (track.audioBlob) {
-        src = URL.createObjectURL(track.audioBlob);
+        let safeBlob = track.audioBlob;
+        if (!safeBlob.type || safeBlob.type === 'application/octet-stream') {
+          safeBlob = new Blob([safeBlob], { type: 'audio/mpeg' });
+        }
+        src = URL.createObjectURL(safeBlob);
         currentObjectUrlRef.current = src;
       } else if (track.audioUrl) {
         src = track.audioUrl;
@@ -163,7 +167,7 @@ export default function App() {
         return;
       }
 
-      audio.src = src;
+      audioEngine.setSource(src);
       audio.volume = isMuted ? 0 : volume;
 
       // Update queue
@@ -179,6 +183,7 @@ export default function App() {
       setCurrentTrack(track);
 
       try {
+        audioEngine.resumeContext();
         audioEngine.initWebAudio();
         audioEngine.applyEqualizer(eqSettings);
         await audio.play();
@@ -187,7 +192,13 @@ export default function App() {
         // Track stats
         await incrementPlayCount(track.id);
       } catch (err) {
-        console.warn('Playback gesture required or interrupted:', err);
+        console.warn('Playback gesture required or interrupted, trying direct play:', err);
+        try {
+          await audio.play();
+          setIsPlaying(true);
+        } catch (errFallback) {
+          console.warn('Direct playback also interrupted:', errFallback);
+        }
       }
     },
     [volume, isMuted, eqSettings, queue]

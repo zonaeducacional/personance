@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Playlist, Track } from '../types';
 import { removeTrackFromPlaylist, savePlaylist, saveTrack } from '../services/db';
-import { parseAudioFile } from '../services/id3Parser';
+import { parseAudioFile, ensureAudioBlob } from '../services/id3Parser';
 
 interface PlaylistDetailViewProps {
   playlist: Playlist;
@@ -100,6 +100,8 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
         const metadata = await parseAudioFile(file);
         const trackId = `track-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
+        const safeAudioBlob = ensureAudioBlob(file, file.name);
+
         const newTrack: Track = {
           id: trackId,
           title: metadata.title,
@@ -109,7 +111,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
           year: metadata.year || new Date().getFullYear(),
           duration: metadata.duration,
           coverUrl: metadata.coverUrl,
-          audioBlob: file,
+          audioBlob: safeAudioBlob,
           dateAdded: Date.now(),
           playCount: 0,
           isFavorite: false,
