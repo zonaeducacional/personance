@@ -1,0 +1,6 @@
+{
+  "name": "Resonance Audio",
+  "description": "Aplicativo de música PWA moderno e independente com player avançado, playlists personalizadas, visualizador de áudio e gerenciamento local de MP3 sem backend.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

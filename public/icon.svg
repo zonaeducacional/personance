@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0b10"/>
+      <stop offset="50%" stop-color="#12131d"/>
+      <stop offset="100%" stop-color="#06070a"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe"/>
+      <stop offset="35%" stop-color="#4facfe"/>
+      <stop offset="70%" stop-color="#a18cd1"/>
+      <stop offset="100%" stop-color="#fbc2eb"/>
+    </linearGradient>
+    <linearGradient id="coreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff0844"/>
+      <stop offset="100%" stop-color="#ffb199"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Outer Rounded Container -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  
+  <!-- Subtle Groove Lines -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#23263b" stroke-width="1.5" stroke-dasharray="4 8"/>
+  <circle cx="256" cy="256" r="168" fill="none" stroke="#2d324d" stroke-width="1"/>
+  <circle cx="256" cy="256" r="136" fill="none" stroke="#373c5f" stroke-width="1.5" stroke-dasharray="3 6"/>
+
+  <!-- Glowing Sonic Resonance Arcs -->
+  <g filter="url(#glow)">
+    <path d="M 120 256 A 136 136 0 0 1 392 256" fill="none" stroke="url(#ringGrad)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M 160 256 A 96 96 0 0 0 352 256" fill="none" stroke="url(#ringGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="14 18"/>
+    <circle cx="256" cy="256" r="64" fill="none" stroke="url(#ringGrad)" stroke-width="10"/>
+  </g>
+
+  <!-- Turntable Vinyl Core / Disc Center -->
+  <circle cx="256" cy="256" r="44" fill="#0d0e15" stroke="url(#coreGrad)" stroke-width="5"/>
+  <circle cx="256" cy="256" r="16" fill="url(#coreGrad)"/>
+  <circle cx="256" cy="256" r="5" fill="#ffffff"/>
+
+  <!-- Play / Dynamic Accent Triangle Indicator -->
+  <polygon points="266,256 250,246 250,266" fill="#ffffff" opacity="0.9"/>
+  
+  <!-- Soundwave vertical equalizer accents -->
+  <rect x="236" y="80" width="8" height="28" rx="4" fill="url(#ringGrad)"/>
+  <rect x="252" y="64" width="8" height="48" rx="4" fill="url(#ringGrad)"/>
+  <rect x="268" y="74" width="8" height="36" rx="4" fill="url(#ringGrad)"/>
+  <rect x="252" y="400" width="8" height="44" rx="4" fill="url(#ringGrad)"/>
+</svg>
